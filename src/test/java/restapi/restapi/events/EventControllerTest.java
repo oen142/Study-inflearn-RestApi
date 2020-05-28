@@ -1,6 +1,7 @@
 package restapi.restapi.events;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -29,6 +30,7 @@ class EventControllerTest {
     @Test
     public void createEvent() throws Exception {
         Event event = Event.builder()
+                .id(100L)
                 .name("Spring")
                 .description("REST API Development with Spring")
                 .beginEnrollmentDateTime(LocalDateTime.of(2018, 11, 23, 14, 21))
@@ -38,6 +40,8 @@ class EventControllerTest {
                 .basePrice(100)
                 .maxPrice(200)
                 .limitOfEnrollment(100)
+                .free(true)
+                .offline(false)
                 .location("강남역 D2 스타텁 팩토리")
                 .build();
 
@@ -49,7 +53,9 @@ class EventControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("id").exists())
                 .andExpect(header().exists(HttpHeaders.LOCATION))
-                .andExpect(header().string(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
+                .andExpect(header().string(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(jsonPath("id").value(Matchers.not(100L)))
+                .andExpect(jsonPath("free").value(Matchers.not(true)));
     }
 
 }
