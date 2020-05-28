@@ -29,8 +29,7 @@ class EventControllerTest {
 
     @Test
     public void createEvent() throws Exception {
-        Event event = Event.builder()
-                .id(100L)
+        EventDto event = EventDto.builder()
                 .name("Spring")
                 .description("REST API Development with Spring")
                 .beginEnrollmentDateTime(LocalDateTime.of(2018, 11, 23, 14, 21))
@@ -40,8 +39,6 @@ class EventControllerTest {
                 .basePrice(100)
                 .maxPrice(200)
                 .limitOfEnrollment(100)
-                .free(true)
-                .offline(false)
                 .location("강남역 D2 스타텁 팩토리")
                 .build();
 
@@ -56,6 +53,69 @@ class EventControllerTest {
                 .andExpect(header().string(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(jsonPath("id").value(Matchers.not(100L)))
                 .andExpect(jsonPath("free").value(Matchers.not(true)));
+//                .andExpect(jsonPath("eventStatus").value(EventStatus.DRAFT));
     }
 
+    @Test
+    public void createEvent_Bad_Request() throws Exception {
+        Event event = Event.builder()
+                .id(100L)
+                .name("Spring")
+                .description("REST API Development with Spring")
+                .beginEnrollmentDateTime(LocalDateTime.of(2018, 11, 23, 14, 21))
+                .closeEnrollmentDateTime(LocalDateTime.of(2018, 11, 24, 14, 21))
+                .beginEventDateTime(LocalDateTime.of(2018, 11, 25, 11, 11))
+                .endEventDateTime(LocalDateTime.of(2018, 11, 23, 14, 21))
+                .basePrice(100)
+                .maxPrice(200)
+                .limitOfEnrollment(100)
+                .free(true)
+                .offline(false)
+                .location("강남역 D2 스타텁 팩토리")
+                .eventStatus(EventStatus.DRAFT)
+                .build();
+
+        mockMvc.perform(post("/api/events")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(event)))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+
+//                .andExpect(jsonPath("eventStatus").value(EventStatus.DRAFT));
+    }
+
+
+    @Test
+    public void createEvent_Bad_Request_Empty_input() throws Exception {
+        EventDto eventDto = EventDto.builder().build();
+
+        this.mockMvc.perform(post("/api/events")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(eventDto)))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+    }
+    @Test
+    public void createEvent_Bad_Request_Wrong_input() throws Exception {
+        EventDto event = EventDto.builder()
+                .name("Spring")
+                .description("REST API Development with Spring")
+                .beginEnrollmentDateTime(LocalDateTime.of(2018, 11, 23, 14, 21))
+                .closeEnrollmentDateTime(LocalDateTime.of(2018, 11, 22, 14, 21))
+                .beginEventDateTime(LocalDateTime.of(2018, 11, 25, 11, 11))
+                .endEventDateTime(LocalDateTime.of(2018, 11, 23, 14, 21))
+                .basePrice(10000)
+                .maxPrice(200)
+                .limitOfEnrollment(100)
+                .location("강남역 D2 스타텁 팩토리")
+                .build();
+        this.mockMvc.perform(post("/api/events")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(event)))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+    }
 }

@@ -36,5 +36,5 @@ public class Event {
     private boolean free;
 
     @Enumerated(value = STRING)
-    private EventStatus eventStatus;
+    private EventStatus eventStatus = EventStatus.DRAFT;
 }
