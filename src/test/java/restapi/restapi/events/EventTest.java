@@ -20,7 +20,7 @@ class EventTest {
     }
 
     @Test
-    public void javaBean(){
+    public void javaBean() {
         Event event = new Event();
         String eventName = "Event";
         event.setName(eventName);
@@ -29,5 +29,47 @@ class EventTest {
 
         assertThat(event.getName()).isEqualTo(eventName);
         assertThat(event.getDescription()).isEqualTo(spring);
+    }
+
+    @Test
+    public void testFree() {
+        Event event = Event.builder()
+                .basePrice(0)
+                .maxPrice(0)
+                .build();
+
+        event.update();
+        assertThat(event.isFree()).isTrue();
+
+        event = Event.builder()
+                .basePrice(100)
+                .maxPrice(0)
+                .build();
+
+        event.update();
+        assertThat(event.isFree()).isFalse();
+        event = Event.builder()
+                .basePrice(100)
+                .maxPrice(100)
+                .build();
+
+        event.update();
+        assertThat(event.isFree()).isFalse();
+
+    }
+    @Test
+    public void testOffline(){
+        Event event = Event.builder()
+                .location("강남")
+                .build();
+
+        event.checkLocation();
+        assertThat(event.isOffline()).isTrue();
+        event = Event.builder()
+                .location("")
+                .build();
+
+        event.checkLocation();
+        assertThat(event.isOffline()).isFalse();
     }
 }
