@@ -54,7 +54,10 @@ class EventControllerTest {
                 .andExpect(jsonPath("id").value(Matchers.not(100L)))
                 .andExpect(jsonPath("free").value(false))
                 .andExpect(jsonPath("offline").value(true))
-                .andExpect(jsonPath("eventStatus").value(EventStatus.DRAFT));
+                .andExpect(jsonPath("_links.self").exists())
+                .andExpect(jsonPath("_links.query-events").exists())
+                .andExpect(jsonPath("_links.update-event").exists());
+
 //                .andExpect(jsonPath("eventStatus").value(EventStatus.DRAFT));
     }
 
@@ -99,6 +102,7 @@ class EventControllerTest {
                 .andDo(print())
                 .andExpect(status().isBadRequest());
     }
+
     @Test
     public void createEvent_Bad_Request_Wrong_input() throws Exception {
         EventDto event = EventDto.builder()
