@@ -15,6 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+import restapi.restapi.common.BaseControllerTest;
 import restapi.restapi.common.RestDocsConfiguration;
 
 import javax.validation.constraints.NotEmpty;
@@ -31,24 +32,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@AutoConfigureRestDocs
-@Import(RestDocsConfiguration.class)
-@Transactional
-class EventControllerTest {
 
-    @Autowired
-    MockMvc mockMvc;
+class EventControllerTest extends BaseControllerTest {
 
-    @Autowired
-    private ObjectMapper objectMapper;
+
 
     @Autowired
     private EventRepository eventRepository;
-
-    @Autowired
-    private ModelMapper modelMapper;
 
     @Test
     public void createEvent() throws Exception {
