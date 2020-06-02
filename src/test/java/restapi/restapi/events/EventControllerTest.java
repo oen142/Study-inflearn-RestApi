@@ -3,6 +3,7 @@ package restapi.restapi.events;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -11,9 +12,12 @@ import org.springframework.context.annotation.Import;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.test.annotation.Rollback;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 import restapi.restapi.common.RestDocsConfiguration;
 
+import javax.validation.constraints.NotEmpty;
 import java.time.LocalDateTime;
 import java.util.stream.IntStream;
 
@@ -23,8 +27,7 @@ import static org.springframework.restdocs.hypermedia.HypermediaDocumentation.li
 import static org.springframework.restdocs.hypermedia.HypermediaDocumentation.links;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.payload.PayloadDocumentation.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -32,6 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @AutoConfigureRestDocs
 @Import(RestDocsConfiguration.class)
+@Transactional
 class EventControllerTest {
 
     @Autowired
@@ -42,6 +46,9 @@ class EventControllerTest {
 
     @Autowired
     private EventRepository eventRepository;
+
+    @Autowired
+    private ModelMapper modelMapper;
 
     @Test
     public void createEvent() throws Exception {
@@ -221,13 +228,114 @@ class EventControllerTest {
 
     }
 
-    private void generateEvent(int index) {
+    @Test
+    //기존의 이벤트를 하나 조회하기
+    public void getEvent() throws Exception {
+
+        Event event = this.generateEvent(1);
+
+        mockMvc.perform(get("/api/events/{id}", event.getId())
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .accept(MediaTypes.HAL_JSON_VALUE))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("name").exists())
+                .andExpect(jsonPath("id").exists())
+                .andExpect(jsonPath("_links.self").exists())
+                .andExpect(jsonPath("_links.profile").exists())
+                .andDo(document("get-an-event"));
+
+
+    }
+
+    @Test
+    //업데이트 이벤트
+    public void updateEvent() throws Exception {
+        Event event = generateEvent(1);
+        EventDto eventDto = modelMapper.map(event, EventDto.class);
+        String eventName = "update Event";
+        eventDto.setName(eventName);
+
+        mockMvc.perform(put("/api/events/{id}", event.getId())
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .accept(MediaTypes.HAL_JSON_VALUE)
+                .content(objectMapper.writeValueAsString(eventDto)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("name").value(eventName))
+                .andExpect(jsonPath("_links.self").exists());
+    }
+
+    @Test
+    //입력값이 비어있는 경우에 이벤트 수정 실패
+    public void updateEvent400_Empty() throws Exception {
+        Event event = generateEvent(1);
+        EventDto eventDto = new EventDto();
+        mockMvc.perform(put("/api/events/{id}", event.getId())
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .accept(MediaTypes.HAL_JSON_VALUE)
+                .content(objectMapper.writeValueAsString(eventDto)))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    //입력값이 잘못된 경우에 이벤트 수정 실패
+    public void updateEvent400_Wrong() throws Exception {
+        Event event = generateEvent(1);
+        EventDto eventDto = this.modelMapper.map(event, EventDto.class);
+        eventDto.setBasePrice(20000);
+        eventDto.setMaxPrice(1000);
+
+        mockMvc.perform(put("/api/events/{id}", event.getId())
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .accept(MediaTypes.HAL_JSON_VALUE)
+                .content(objectMapper.writeValueAsString(eventDto)))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    //존재하지 않은 이벤트 수정 실패
+    public void updateEvent404() throws Exception {
+        Event event = generateEvent(1);
+        EventDto eventDto = modelMapper.map(event, EventDto.class);
+        String eventName = "update Event";
+        eventDto.setName(eventName);
+
+        mockMvc.perform(put("/api/events/{id}","123123123")
+                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .accept(MediaTypes.HAL_JSON_VALUE)
+                .content(objectMapper.writeValueAsString(eventDto)))
+                .andDo(print())
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    //없는 이벤를 조회했을 때 404 응답받기
+    public void getEvent404() throws Exception {
+        mockMvc.perform(get("/api/events/2131eqw321"))
+                .andDo(print())
+                .andExpect(status().isNotFound());
+    }
+
+    private Event generateEvent(int index) {
         Event event = Event.builder()
-                .name("event" + index)
-                .description("test event" + index)
+                .name("Spring")
+                .description("REST API Development with Spring")
+                .beginEnrollmentDateTime(LocalDateTime.of(2018, 11, 23, 14, 21))
+                .closeEnrollmentDateTime(LocalDateTime.of(2018, 11, 24, 14, 21))
+                .beginEventDateTime(LocalDateTime.of(2018, 11, 25, 11, 11))
+                .endEventDateTime(LocalDateTime.of(2018, 11, 26, 14, 21))
+                .basePrice(100)
+                .maxPrice(200)
+                .limitOfEnrollment(100)
+                .location("강남역 D2 스타텁 팩토리")
+                .free(false)
+                .offline(true)
                 .build();
 
-        this.eventRepository.save(event);
+        return this.eventRepository.save(event);
     }
 
 }
