@@ -11,6 +11,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -31,6 +32,9 @@ class AccountServiceTest {
     @Autowired
     AccountRepository accountRepository;
 
+    @Autowired
+    PasswordEncoder passwordEncoder;
+
     @Test
     public void findByUsername() {
         Set<AccountRole> accountRoles = new HashSet<>();
@@ -42,12 +46,13 @@ class AccountServiceTest {
                 .password(password)
                 .roles(accountRoles)
                 .build();
-        this.accountRepository.save(account);
+        this.accountService.saveAccount(account);
         UserDetailsService userDetailsService = (UserDetailsService) accountService;
         UserDetails user = userDetailsService.loadUserByUsername("oen142@naver.com");
 
 
-        assertThat(user.getPassword()).isEqualTo(password);
+        assertThat(passwordEncoder.matches(password, user.getPassword())).isTrue();
+
     }
 
     @Test
@@ -61,9 +66,10 @@ class AccountServiceTest {
             assertThat(e.getMessage()).containsSequence(username);
         }
     }
+
     @Test
     @Ignore
-    public void findByUsernameFailAnother(){
+    public void findByUsernameFailAnother() {
         String username = "random@email.com";
         expectedException.expect(UsernameNotFoundException.class);
         expectedException.expectMessage(Matchers.containsString(username));

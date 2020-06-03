@@ -8,6 +8,5 @@ import java.util.Optional;
 
 public interface AccountRepository extends JpaRepository<Account ,Long> {
 
-    @Query("select a from Account a join fetch a.roles")
     Optional<Account> findByEmail(String username);
 }
