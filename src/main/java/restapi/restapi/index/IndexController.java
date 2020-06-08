@@ -17,4 +17,9 @@ public class IndexController {
         RepresentationModel representationModel = new RepresentationModel();
         return representationModel.add(linkTo(EventController.class).withRel("events"));
     }
+    @GetMapping("/api/v1/index")
+    public RepresentationModel index_V1(){
+        RepresentationModel representationModel = new RepresentationModel();
+        return representationModel.add(linkTo(EventController.class).withRel("events"));
+    }
 }

@@ -16,6 +16,7 @@ import restapi.restapi.common.ErrorsResource;
 
 import javax.validation.Valid;
 import java.net.URI;
+import java.util.Optional;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 
@@ -66,5 +67,15 @@ public class EventController {
 
     private ResponseEntity<ErrorsResource> getBadRequest(Errors errors) {
         return ResponseEntity.badRequest().body(new ErrorsResource(errors));
+    }
+
+    @PutMapping("/event/{id}")
+    public ResponseEntity putEvent(@PathVariable Long id, @RequestBody EventDto eventDto) {
+
+        Optional<Event> byId = eventRepository.findById(id);
+        Event event = byId.get();
+        event.update();
+
+        return ResponseEntity.ok().body(event);
     }
 }
