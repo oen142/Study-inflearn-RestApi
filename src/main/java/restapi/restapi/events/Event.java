@@ -2,6 +2,7 @@ package restapi.restapi.events;
 
 
 import lombok.*;
+import restapi.restapi.account.Account;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -34,6 +35,9 @@ public class Event {
     private int limitOfEnrollment;
     private boolean offline;
     private boolean free;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Account account;
 
     @Enumerated(value = STRING)
     private EventStatus eventStatus = EventStatus.DRAFT;
